@@ -6,7 +6,7 @@ from torchvision.datasets import ImageFolder
 from torchvision.models import resnet18
 #====================================================================================#
 
-train_data_path = 'dataset/dataset'
+train_data_path = 'dataset'
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -28,7 +28,7 @@ optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
 device = torch.device("cpu")
 model = model.to(device)
 
-num_epochs = 5
+num_epochs = 6
 
 for epoch in range(num_epochs):
     total_loss = 0

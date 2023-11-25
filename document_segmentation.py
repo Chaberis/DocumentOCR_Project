@@ -55,7 +55,7 @@ def extract_text_words(image_path):
 
     return words
 
-image_path = '89.png'
+image_path = 'Thingies/89.png'
 word_images = extract_text_words(image_path)
 for i, word_image in enumerate(word_images):
     cv2.imwrite(f'segments_test/word_{i}.png', word_image)
