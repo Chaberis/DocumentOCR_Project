@@ -67,9 +67,7 @@ def process_images_in_folder(input_folder, output_folder):
     for image_file in image_files:
         j += 1
         image_path = os.path.join(input_folder, image_file)
-        output_path = os.path.join(output_folder, f"{j}", image_file)
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+        output_path = os.path.join(output_folder, image_file)
         words = extract_text_words(image_path)
 
         for i, word in enumerate(words):

@@ -12,6 +12,7 @@ model.fc = nn.Linear(num_features, 2)
 model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 model.eval()
 
+
 def classify_image(image_path):
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -25,7 +26,8 @@ def classify_image(image_path):
     predicted_class = predicted.item()
     return predicted_class
 
-def classify_images_in_folder(input_folder, output_folder):
+
+def process_images_in_folder(input_folder, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
@@ -36,16 +38,11 @@ def classify_images_in_folder(input_folder, output_folder):
         predicted_class = classify_image(image_path)
 
         if predicted_class == 1:
-            save_folder = os.path.join(output_folder, "Class_1")
-        else:
-            save_folder = os.path.join(output_folder, "Class_0")
-
-        os.makedirs(save_folder, exist_ok=True)
-        save_path = os.path.join(save_folder, image_file)
-        os.rename(image_path, save_path)
+            save_path = os.path.join(output_folder, image_file)
+            os.rename(image_path, save_path)
 
 
 input_folder = 'place_docs_here/processing/segmented_pngs'
 output_folder = 'place_docs_here/processing/differented_pngs'
 
-classify_images_in_folder(input_folder, output_folder)
+process_images_in_folder(input_folder, output_folder)
