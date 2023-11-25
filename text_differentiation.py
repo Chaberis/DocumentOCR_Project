@@ -1,62 +1,51 @@
 import torch
 import torchvision.transforms as transforms
-from torch import nn, optim
-from torch.utils.data import DataLoader
-from torchvision.datasets import ImageFolder
 from torchvision.models import resnet18
-#====================================================================================#
-
-train_data_path = 'dataset'
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-train_dataset = ImageFolder(train_data_path, transform)
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-model = resnet18(pretrained=True)
-
-for param in model.parameters():
-    param.requires_grad = False
-
-num_features = model.fc.in_features
-model.fc = nn.Linear(num_features, 2)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
-
-device = torch.device("cpu")
-model = model.to(device)
-
-num_epochs = 6
-
-for epoch in range(num_epochs):
-    total_loss = 0
-    correct = 0
-    total = 0
-    for images, labels in train_loader:
-        images = images.to(device)
-        labels = labels.to(device)
-
-        optimizer.zero_grad()
-
-        outputs = model(images)
-
-        loss = criterion(outputs, labels)
-
-        loss.backward()
-        optimizer.step()
-
-        total_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += labels.size(0)
-        correct += predicted.eq(labels).sum().item()
-
-    accuracy = 100. * correct / total
-    print(f'Эпоха [{epoch + 1}/{num_epochs}], Потери: {total_loss:.4f}, Точность: {accuracy:.2f}%')
+from PIL import Image
+from torch import nn, optim
+import os
 
 model_path = 'FragModel.pth'
-#====================================================================================#
+model = resnet18(pretrained=True)
+num_features = model.fc.in_features
+model.fc = nn.Linear(num_features, 2)
+model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+model.eval()
 
-torch.save(model.state_dict(), model_path)
-print(f'Модель сохранена по пути: {model_path}')
+def classify_image(image_path):
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+    image = Image.open(image_path).convert('RGB')
+    image = transform(image).unsqueeze(0)
+    outputs = model(image)
+    _, predicted = torch.max(outputs, 1)
+    predicted_class = predicted.item()
+    return predicted_class
+
+def classify_images_in_folder(input_folder, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    images = os.listdir(input_folder)
+
+    for image_file in images:
+        image_path = os.path.join(input_folder, image_file)
+        predicted_class = classify_image(image_path)
+
+        if predicted_class == 1:
+            save_folder = os.path.join(output_folder, "Class_1")
+        else:
+            save_folder = os.path.join(output_folder, "Class_0")
+
+        os.makedirs(save_folder, exist_ok=True)
+        save_path = os.path.join(save_folder, image_file)
+        os.rename(image_path, save_path)
+
+
+input_folder = 'place_docs_here/processing/segmented_pngs'
+output_folder = 'place_docs_here/processing/differented_pngs'
+
+classify_images_in_folder(input_folder, output_folder)

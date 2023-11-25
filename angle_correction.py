@@ -1,10 +1,10 @@
 import math
 from typing import Tuple, Union
-
 import cv2
 import numpy as np
-
 from deskew import determine_skew
+import os
+import shutil
 
 
 def rotate(
@@ -22,8 +22,20 @@ def rotate(
     return cv2.warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
 
 
-image = cv2.imread('../pythonProject1/test_thingy.png')
-grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-angle = determine_skew(grayscale)
-rotated = rotate(image, angle, (0, 0, 0))
-cv2.imwrite('../pythonProject1/output.png', rotated)
+def image_deskew(input_folder, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    image_files = os.listdir(input_folder)
+
+    for image_file in image_files:
+        image_path = os.path.join(input_folder, image_file)
+        output_path = os.path.join(output_folder, image_file)
+
+        shutil.copy(image_path, output_path)
+
+
+input_folder = 'place_docs_here/processing/pic_to_png'
+output_folder = 'place_docs_here/processing/rotated_pngs'
+
+image_deskew(input_folder, output_folder)
