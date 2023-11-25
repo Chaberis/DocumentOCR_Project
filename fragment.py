@@ -31,7 +31,7 @@ def extract_text_fragments(image_path):
 
 
 # Пример использования
-image_path = '0.jpeg'  # Замените путь на путь к вашему изображению документа
+image_path = 'Thingies/test_image.jpeg'  # Замените путь на путь к вашему изображению документа
 text_fragments = extract_text_fragments(image_path)
 
 # Сохранение фрагментов с текстом в отдельные файлы

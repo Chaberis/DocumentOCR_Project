@@ -22,8 +22,8 @@ def rotate(
     return cv2.warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
 
 
-image = cv2.imread('../../pythonProject1/test_thingy.png')
+image = cv2.imread('../pythonProject1/test_thingy.png')
 grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 angle = determine_skew(grayscale)
 rotated = rotate(image, angle, (0, 0, 0))
-cv2.imwrite('../../pythonProject1/output.png', rotated)
+cv2.imwrite('../pythonProject1/output.png', rotated)
