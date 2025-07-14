@@ -1,0 +1,32 @@
+[workspace]
+authors = ["Chaberis <chaberwork@mail.ru>"]
+channels = ["pytorch", "nvidia", "conda-forge"]
+name = "DocumentOCR_Project"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+start = "streamlit run src/app.py"
+# 'run' больше не будет работать из-за относительных импортов,
+# но оставляем для истории. Основная команда - 'start'.
+run = "echo \"Use 'pixi run start' to launch the application.\""
+
+[dependencies]
+python = ">=3.9,<3.12"
+pytorch = "*"
+torchvision = "*"
+torchaudio = "*"
+pytorch-cuda = "==11.8"
+screeninfo = ">=0.8.1,<0.9"
+streamlit = ">=1.46.1,<2"
+
+[pypi-dependencies]
+ultralytics = ">=8.0"
+pymupdf = ">=1.23.0"
+pillow = ">=10.0"
+opencv-python-headless = ">=4.8"
+transformers = ">=4.0"
+sentencepiece = ">=0.1.9"
+accelerate = ">=0.20"
+streamlit-iframe-event = ">=0.0.9, <0.0.10"
+streamlit-image-comparison = ">=0.0.4, <0.0.5"
