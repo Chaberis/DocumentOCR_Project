@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent.parent
 MODELS_DIR = ROOT_DIR / 'models'
 DETECTION_MODEL_PATH = MODELS_DIR / 'best.pt'
-OCR_MODEL_PATH = MODELS_DIR / 'models/trocr-base-handwritten-ru'
+OCR_MODEL_PATH = MODELS_DIR / 'trocr-base-handwritten-ru'
 FONT_PATH = ROOT_DIR / 'assets' / 'ARIAL.TTF'
 
 # --- Hugging Face ---
