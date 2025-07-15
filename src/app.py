@@ -16,6 +16,7 @@ from processing import (
     extract_text_data,
     create_final_image
 )
+from download_models import download_models
 from streamlit_image_comparison import image_comparison
 
 st.set_page_config(layout="wide", page_title="DocuScribe")
@@ -26,14 +27,17 @@ def load_models():
     models = {}
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        models['detection'] = YOLO(config.DETECTION_MODEL)
-        processor = TrOCRProcessor.from_pretrained(config.OCR_MODEL)
-        ocr_model = VisionEncoderDecoderModel.from_pretrained(config.OCR_MODEL).to(device) # type: ignore
+        if device == "cpu":
+            st.warning("⚠️ Внимание: Обнаружен CPU. Обработка может занять больше времени.", icon="⚙️")
+
+        models['detection'] = YOLO(config.DETECTION_MODEL_PATH)
+        processor = TrOCRProcessor.from_pretrained(config.OCR_MODEL_PATH)
+        ocr_model = VisionEncoderDecoderModel.from_pretrained(config.OCR_MODEL_PATH).to(device) # type: ignore
         models['ocr'] = {'processor': processor, 'model': ocr_model, 'device': device}
         
         try:
-            ImageFont.truetype(config.FONT_PATH, 10)
-            models['font_path'] = config.FONT_PATH
+            ImageFont.truetype(str(config.FONT_PATH), 10)
+            models['font_path'] = str(config.FONT_PATH)
         except IOError:
             models['font_path'] = None
             st.warning(f"Шрифт не найден: {config.FONT_PATH}")
@@ -52,11 +56,52 @@ def init_session_state():
         st.session_state.text_data = []
         st.session_state.file_name = None
 
+def display_results_ui():
+    """Отображает результаты обработки: сравнение изображений и кнопки для скачивания."""
+    st.subheader("Результат")
+    with st.container(height=800):
+        original_rgb = cv2.cvtColor(st.session_state.source_image, cv2.COLOR_BGR2RGB)
+        processed_rgb = cv2.cvtColor(st.session_state.processed_image, cv2.COLOR_BGR2RGB)
+        image_comparison(img1=original_rgb, img2=processed_rgb, label1="Оригинал", label2="Результат")
+
+    dl_col1, dl_col2 = st.columns(2)
+    with dl_col1:
+        _, buf = cv2.imencode(".png", st.session_state.processed_image)
+        st.download_button("Скачать .png", buf.tobytes(), f"{Path(st.session_state.file_name).stem}_processed.png", "image/png", use_container_width=True)
+    with dl_col2:
+        full_text = "\n".join([item['text'] for item in st.session_state.text_data if item['text']])
+        st.download_button("Скачать .txt", full_text.encode('utf-8'), f"{Path(st.session_state.file_name).stem}_text.txt", "text/plain", use_container_width=True)
+
+def display_editor_ui(models):
+    """Отображает редактор текста и кнопку для применения изменений."""
+    st.subheader("Редактор текста")
+    if not st.session_state.text_data:
+        st.info("Нет текста для редактирования.")
+        return
+
+    with st.container(height=800):
+        edited_texts = {}
+        for i, item in enumerate(st.session_state.text_data):
+            edited_texts[i] = st.text_input(f"Фрагмент {i+1}", value=item['text'], key=f"text_{i}")
+
+    if st.button("✅ Применить", use_container_width=True):
+        for i, new_text in edited_texts.items():
+            st.session_state.text_data[i]['text'] = new_text
+        
+        new_image = create_final_image(st.session_state.source_image, st.session_state.text_data, models['font_path'])
+        st.session_state.processed_image = new_image
+        st.rerun()
+
 def main():
     """Основная функция UI приложения."""
     st.title("📝 Docu`Scribe`")
     st.markdown("Замените рукописный текст на печатный.")
     
+    # Убедимся, что модели скачаны, перед тем как что-то делать
+    if not download_models():
+        st.error("Не удалось загрузить необходимые модели. Приложение не может запуститься.")
+        return
+
     init_session_state()
     models = load_models()
     if not models:
@@ -68,7 +113,7 @@ def main():
     
     uploaded_file = st.file_uploader("Загрузите изображение или PDF", type=["jpg", "jpeg", "png", "pdf"])
 
-    if uploaded_file and uploaded_file.file_id != st.session_state.file_id:
+    if uploaded_file and uploaded_file.file_id != st.session_state.get('file_id'):
         st.session_state.file_id = uploaded_file.file_id
         st.session_state.file_name = uploaded_file.name
         
@@ -86,7 +131,7 @@ def main():
                 st.session_state.processed_image = None
                 st.rerun()
         except IOError as e:
-            st.error(str(e)) 
+            st.error(str(e))
             st.session_state.source_image = None
 
     if st.session_state.source_image is not None:
@@ -104,37 +149,9 @@ def main():
     if st.session_state.processed_image is not None:
         col1, col2 = st.columns([3, 2])
         with col1:
-            st.subheader("Результат")
-            with st.container(height=800):
-                original_rgb = cv2.cvtColor(st.session_state.source_image, cv2.COLOR_BGR2RGB) # type: ignore
-                processed_rgb = cv2.cvtColor(st.session_state.processed_image, cv2.COLOR_BGR2RGB)
-                image_comparison(img1=original_rgb, img2=processed_rgb, label1="Оригинал", label2="Результат")
-
-            dl_col1, dl_col2 = st.columns(2)
-            with dl_col1:
-                _, buf = cv2.imencode(".png", st.session_state.processed_image)
-                st.download_button("Скачать .png", buf.tobytes(), f"{Path(st.session_state.file_name).stem}_processed.png", "image/png", use_container_width=True)
-            with dl_col2:
-                full_text = "\n".join([item['text'] for item in st.session_state.text_data if item['text']])
-                st.download_button("Скачать .txt", full_text.encode('utf-8'), f"{Path(st.session_state.file_name).stem}_text.txt", "text/plain", use_container_width=True)
-
+            display_results_ui()
         with col2:
-            st.subheader("Редактор текста")
-            if st.session_state.text_data:
-                with st.container(height=800):
-                    edited_texts = {}
-                    for i, item in enumerate(st.session_state.text_data):
-                        edited_texts[i] = st.text_input(f"Фрагмент {i+1}", value=item['text'], key=f"text_{i}")
-
-                if st.button("✅ Применить", use_container_width=True):
-                    for i, new_text in edited_texts.items():
-                        st.session_state.text_data[i]['text'] = new_text
-                    
-                    new_image = create_final_image(st.session_state.source_image, st.session_state.text_data, models['font_path'])
-                    st.session_state.processed_image = new_image
-                    st.rerun()
-            else:
-                st.info("Нет текста для редактирования.")
+            display_editor_ui(models)
 
 if __name__ == "__main__":
     main()
