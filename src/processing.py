@@ -64,19 +64,28 @@ def draw_text_on_image(image, box, text, font_path):
 
 def extract_text_data(image, models, conf):
     """Выполняет детекцию и OCR, возвращая список словарей с текстом и координатами."""
+    print("--- Начало extract_text_data ---")
     results = models['detection'](image, conf=conf)
     boxes = [[int(i) for i in box.xyxy[0]] for result in results for box in result.boxes]
     
+    print(f"Найдено {len(boxes)} фрагментов для распознавания.")
+    
     if not boxes:
+        print("--- Завершение extract_text_data (фрагменты не найдены) ---")
         return []
 
     text_data = []
-    for box in boxes:
+    for i, box in enumerate(boxes):
+        print(f"Обработка фрагмента {i+1}/{len(boxes)}...")
         roi = image[box[1]:box[3], box[0]:box[2]]
         if roi.size > 0:
             text = run_ocr(roi, models['ocr'])
             text_data.append({'box': box, 'text': text})
+            print(f"  > Фрагмент {i+1} распознан. Результат: '{text[:30]}...'")
+        else:
+            print(f"  > Фрагмент {i+1} пропущен (нулевой размер).")
             
+    print("--- Завершение extract_text_data (успешно) ---")
     return text_data
 
 def create_final_image(image, text_data, font_path):
