@@ -7,9 +7,6 @@ version = "0.1.0"
 
 [tasks]
 start = "streamlit run src/app.py"
-# 'run' больше не будет работать из-за относительных импортов,
-# но оставляем для истории. Основная команда - 'start'.
-run = "echo \"Use 'pixi run start' to launch the application.\""
 
 [dependencies]
 python = ">=3.9,<3.12"
