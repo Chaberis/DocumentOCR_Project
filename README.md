@@ -1,6 +1,5 @@
 # DocuScribe: Распознавание и замена рукописного текста
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://documentocrproject-beffpafdrj9jxrg3xddedi.streamlit.app/)
+## Открыть на streamlit: [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://documentocrproject-beffpafdrj9jxrg3xddedi.streamlit.app/)
 
 DocuScribe — это веб-приложение, предназначенное для автоматического обнаружения и замены рукописного текста в документах на печатный.
 
